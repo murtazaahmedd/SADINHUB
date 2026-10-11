@@ -1,0 +1,13 @@
+level,horizon,overall_accuracy,units,units_at_or_above_80,lowest_unit_accuracy,unit_month_cells,cells_at_or_above_80,lowest_cell,periods_compared
+meter,1 day,87.07,31,26,67.9,217,155,34.6,5297
+meter,7 days,84.45,31,24,27.6,212,151,11.09,4801
+meter,30 days,81.52,31,20,0.16,182,110,0.1,3917
+meter,calendar month,78.87,31,17,0.6,181,107,-32.31,181
+zone,1 day,88.57,21,20,67.9,147,122,34.6,3591
+zone,30 days,83.65,21,15,0.16,122,80,0.1,2619
+zone,7 days,86.19,21,18,27.6,142,107,11.09,3210
+zone,calendar month,81.12,21,11,0.6,121,68,0.6,121
+facility,1 day,93.81,1,1,93.81,7,7,89.37,173
+facility,30 days,88.01,1,1,88.01,6,6,83.38,132
+facility,7 days,92.1,1,1,92.1,7,7,80.97,163
+facility,calendar month,88.91,1,1,88.91,6,4,75.36,6

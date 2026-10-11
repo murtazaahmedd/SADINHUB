@@ -1,0 +1,7 @@
+{
+  "forecast_issued_for_morning_of": "2026-07-11",
+  "uses_actuals_through": "2026-07-10",
+  "forecast_until": "2026-12-31",
+  "model_trained_through": "2026-07-10",
+  "training_examples": 883724
+}

@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+.pytest_cache/
+reference_project/
+data/
+artifacts/
+DATABASE_BACKUP.dump
+outputs/data/validated_intervals.parquet

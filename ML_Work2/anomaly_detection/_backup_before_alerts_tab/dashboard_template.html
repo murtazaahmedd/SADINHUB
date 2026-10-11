@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SADIN Energy Forecast</title>
+<style>
+:root{
+  --bg:#f4f3ef; --card:#ffffff; --ink:#17201d; --muted:#5f6b67; --line:#e4e2dc; --soft:#f1f0eb;
+  --brand:#1e3b34; --brand-2:#2a4d44; --brand-ink:#eef5f2; --brand-muted:#a9c2ba;
+  --seg:#1c2a26; --forecast:#2e7d6b; --actual:#8d969c;
+  --good:#16794a; --good-bg:#e3f4ea; --ok:#56852a; --ok-bg:#eef6e2;
+  --warn:#946200; --warn-bg:#fcf1d8; --bad:#b42318; --bad-bg:#fde8e6; --na:#9aa3a0;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+header{background:var(--brand);color:var(--brand-ink);padding:22px 0 20px}
+.wrap{max-width:1260px;margin:0 auto;padding:0 22px}
+header h1{margin:0;font-size:23px;font-weight:650;letter-spacing:.2px}
+header p{margin:6px 0 0;color:var(--brand-muted);font-size:13.5px}
+main{padding:20px 0 56px}
+h2{font-size:17px;margin:30px 0 10px;font-weight:650}
+h2 small{font-weight:400;color:var(--muted);font-size:13px;margin-left:6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.filters{display:grid;grid-template-columns:1fr 1fr 1.35fr 1.6fr;gap:22px;padding:22px 24px}
+.filters label{display:block;font-size:13.5px;font-weight:650;margin-bottom:9px}
+.filters input,.filters select{width:100%;font:inherit;font-size:16px;padding:11px 14px;border:1px solid #d6d4cd;border-radius:9px;background:#fff;color:var(--ink)}
+.filters input:focus,.filters select:focus{outline:2px solid #8bb8ab;outline-offset:1px}
+.seg{display:flex;background:var(--soft);border-radius:10px;padding:4px;gap:4px}
+.seg button{flex:1;border:0;background:transparent;padding:9px 10px;font:inherit;font-size:16px;color:var(--ink);border-radius:8px;cursor:pointer}
+.seg button.on{background:var(--seg);color:#fff}
+.seg.small button{font-size:14px;padding:6px 12px;flex:none}
+.error{color:var(--bad);font-size:13px;margin-top:6px;min-height:0}
+.sel-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:22px 0 12px}
+.sel-head h2{margin:0}
+.chip{font-size:13px;background:#e8eeeb;color:var(--brand);border-radius:999px;padding:5px 12px;font-weight:600}
+.cards3{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:14px}
+.big-card{background:var(--brand);color:var(--brand-ink);border:0;border-radius:12px;padding:22px 24px}
+.eyebrow{font-size:12.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted)}
+.big-card .eyebrow{color:var(--brand-muted)}
+.big{font-size:46px;font-weight:750;line-height:1.1;margin-top:14px;font-variant-numeric:tabular-nums}
+.big .unit{font-size:20px;font-weight:500;margin-left:6px}
+.mid{font-size:34px;font-weight:700;line-height:1.15;margin-top:14px;font-variant-numeric:tabular-nums}
+.mid .unit{font-size:17px;font-weight:500;margin-left:5px}
+.mid.text{font-size:20px;font-weight:600;line-height:1.3}
+.sub{font-size:13.5px;color:var(--muted);margin-top:8px}
+.big-card .sub{color:var(--brand-muted)}
+.badge{display:inline-block;font-size:12.5px;font-weight:650;border-radius:999px;padding:3px 10px;margin-top:10px}
+.badge.good{background:var(--good-bg);color:var(--good)} .badge.bad{background:var(--bad-bg);color:var(--bad)}
+.badge.na{background:var(--soft);color:var(--muted)}
+.two{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-top:14px}
+.chart-wrap{position:relative;height:300px}
+.chart-wrap.tall{height:340px}
+.note{font-size:12.5px;color:var(--muted);margin-top:8px}
+.periods .row{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;padding:12px 10px;border-radius:10px;cursor:pointer;border:1px solid transparent}
+.periods .row:hover{background:var(--soft)}
+.periods .row.on{border-color:var(--forecast);background:#eef6f3}
+.periods .name{font-weight:650}
+.periods .vals{text-align:right;font-variant-numeric:tabular-nums}
+.periods .detail{grid-column:1 / -1;font-size:13px;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:9px 11px;border-bottom:1px solid #eeede8;text-align:right;white-space:nowrap}
+th{font-size:12.5px;color:var(--muted);font-weight:650;background:#fafaf7;position:sticky;top:0;z-index:1}
+td:first-child,th:first-child{text-align:left}
+td.why{text-align:left;color:var(--muted);font-size:13px;white-space:normal}
+tr.total td{font-weight:700;background:#fafaf7}
+.cell{display:inline-block;min-width:62px;border-radius:7px;padding:2px 7px;font-weight:650;text-align:center}
+.c-good{background:var(--good-bg);color:var(--good)} .c-ok{background:var(--ok-bg);color:var(--ok)}
+.c-warn{background:var(--warn-bg);color:var(--warn)} .c-bad{background:var(--bad-bg);color:var(--bad)}
+.c-na{color:var(--na);font-weight:400}
+.scroll{overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.scroll.capped{max-height:640px}
+tr.pick{cursor:pointer} tr.pick:hover td{background:#f5f8f6}
+tr.sel td{background:#e6f1ec!important}
+.table-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:26px 0 10px}
+.table-head h2{margin:0}
+button.action{font:inherit;font-size:14px;border:1px solid var(--brand);color:var(--brand);background:#fff;border-radius:9px;padding:8px 14px;cursor:pointer}
+button.action:hover{background:#eef5f2}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.grid6{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.kpi .label{font-size:13px;color:var(--muted)}
+.kpi .value{font-size:30px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi .value.small{font-size:22px}
+.kpi .knote{font-size:12.5px;color:var(--muted);margin-top:4px}
+.key{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:8px 2px 0}
+.key span{display:inline-flex;align-items:center;gap:6px}.key i{width:14px;height:10px;border-radius:3px;display:inline-block}
+.tabs{display:flex;gap:6px;margin-top:16px}
+.tabs button{font:inherit;font-size:15px;border:1px solid rgba(255,255,255,.25);background:transparent;color:var(--brand-ink);
+  padding:8px 16px;border-radius:9px;cursor:pointer}
+.tabs button.on{background:var(--brand-ink);color:var(--brand);border-color:var(--brand-ink);font-weight:650}
+.bill-filters{grid-template-columns:1.7fr 1fr 1.2fr 1.3fr}
+.tariff{font-size:14px;line-height:1.6;color:var(--ink);background:var(--soft);border-radius:10px;padding:8px 12px}
+.steps{margin:10px 0 0;padding-left:20px;font-size:14px;line-height:1.55}
+.steps li{margin-bottom:6px}
+#b-breakdown td,#b-breakdown th{padding:7px 4px}
+.divider{margin:40px 0 0;padding-top:6px;border-top:2px solid var(--line)}
+.divider h2{margin-top:18px;font-size:19px}
+@media (max-width:1000px){.filters,.bill-filters{grid-template-columns:1fr 1fr}.cards3{grid-template-columns:1fr}.two{grid-template-columns:1fr}
+  .grid4{grid-template-columns:repeat(2,minmax(0,1fr))}.grid6{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.filters,.bill-filters{grid-template-columns:1fr}.big{font-size:38px}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>SADIN Facility · Energy Consumption Forecast</h1>
+  <p id="meta"></p>
+  <nav class="tabs" id="tabs">
+    <button data-page="kwh" class="on">Consumption forecast (kWh)</button>
+    <button data-page="bill">Bill forecast (SAR)</button>
+  </nav>
+</div></header>
+<main class="wrap">
+
+<div id="page-bill" hidden>
+  <section class="card filters bill-filters" aria-label="Bill selection">
+    <div>
+      <label for="b-cycle">Billing cycle (30 days)</label>
+      <select id="b-cycle"></select>
+    </div>
+    <div>
+      <label for="b-zone">Zone</label>
+      <select id="b-zone"></select>
+    </div>
+    <div>
+      <label for="b-meter">Meter or zone total</label>
+      <select id="b-meter"></select>
+    </div>
+    <div>
+      <label>Tariff (commercial)</label>
+      <div class="tariff" id="b-tariff"></div>
+    </div>
+  </section>
+
+  <div class="sel-head">
+    <h2 id="b-title"></h2>
+    <span class="chip" id="b-chip"></span>
+  </div>
+
+  <section class="cards3" aria-live="polite">
+    <div class="big-card">
+      <div class="eyebrow">Predicted bill</div>
+      <div class="big" id="b-bill"></div>
+      <div class="sub" id="b-bill-sub"></div>
+    </div>
+    <div class="card">
+      <div class="eyebrow">Predicted consumption</div>
+      <div class="mid" id="b-kwh"></div>
+      <div class="sub" id="b-kwh-sub"></div>
+    </div>
+    <div class="card">
+      <div class="eyebrow" id="b-third-title"></div>
+      <div class="mid" id="b-third"></div>
+      <div class="sub" id="b-third-sub"></div>
+    </div>
+  </section>
+
+  <section class="two">
+    <div class="card">
+      <div class="eyebrow">How this bill is made up</div>
+      <table id="b-breakdown" style="margin-top:8px"></table>
+      <div class="note" id="b-breakdown-note"></div>
+    </div>
+    <div class="card">
+      <div class="eyebrow">How a bill is calculated</div>
+      <ol class="steps" id="b-rules"></ol>
+    </div>
+  </section>
+
+  <div class="table-head">
+    <h2 id="b-table-title"></h2>
+    <button class="action" id="b-download">Download this table (CSV)</button>
+  </div>
+  <div class="scroll capped"><table id="b-meters"></table></div>
+  <div class="note">Each meter is billed on its own: the 6,000 kWh step and the service fee apply per meter, so zone and facility totals are the sum of the meter bills.</div>
+
+  <h2>All 2026 billing cycles <small id="b-year-sub"></small></h2>
+  <div class="scroll"><table id="b-year"></table></div>
+  <div class="note" id="b-year-note"></div>
+</div>
+
+<div id="page-kwh">
+
+  <section class="card filters" aria-label="Forecast selection">
+    <div>
+      <label for="start">Start date in 2026</label>
+      <input id="start" type="date" min="2026-01-01" max="2026-12-31">
+      <div class="error" id="start-error" aria-live="polite"></div>
+    </div>
+    <div>
+      <label for="zone">Zone</label>
+      <select id="zone"></select>
+    </div>
+    <div>
+      <label for="meter">Meter or zone total</label>
+      <select id="meter"></select>
+    </div>
+    <div>
+      <label>Forecast period</label>
+      <div class="seg" id="period" role="group" aria-label="Forecast period">
+        <button data-h="1" class="on">Day</button>
+        <button data-h="7">7 days</button>
+        <button data-h="30">30 days</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="sel-head">
+    <h2 id="sel-title"></h2>
+    <span class="chip" id="sel-chip"></span>
+  </div>
+
+  <section class="cards3" aria-live="polite">
+    <div class="big-card">
+      <div class="eyebrow">Predicted period consumption</div>
+      <div class="big" id="pred-value"></div>
+      <div class="sub" id="pred-period"></div>
+    </div>
+    <div class="card">
+      <div class="eyebrow">Actual consumption</div>
+      <div class="mid" id="act-value"></div>
+      <div class="sub" id="act-note"></div>
+    </div>
+    <div class="card">
+      <div class="eyebrow">Accuracy of this forecast</div>
+      <div class="mid" id="acc-value"></div>
+      <div id="acc-badge"></div>
+      <div class="sub" id="acc-note"></div>
+    </div>
+  </section>
+
+  <section class="two">
+    <div class="card">
+      <div class="eyebrow">Day by day in this period</div>
+      <div class="chart-wrap" style="margin-top:10px"><canvas id="period-chart"></canvas></div>
+      <div class="note" id="period-chart-note"></div>
+    </div>
+    <div class="card periods">
+      <div class="eyebrow" id="three-title">Day, 7 days and 30 days</div>
+      <div id="three" style="margin-top:8px"></div>
+    </div>
+  </section>
+
+  <div class="table-head">
+    <h2 id="table-title"></h2>
+    <button class="action" id="download">Download this table (CSV)</button>
+  </div>
+  <div class="scroll"><table id="breakdown"></table></div>
+
+  <h2>What is coming <small id="coming-sub"></small></h2>
+  <div class="grid6" id="coming"></div>
+  <div class="note" id="long-note"></div>
+
+  <div class="divider"><h2>2026 track record <small id="track-sub"></small></h2></div>
+  <div class="grid4" id="acc-cards"></div>
+
+  <h2>Daily consumption in 2026: actual and forecast</h2>
+  <div class="card">
+    <div class="chart-wrap tall"><canvas id="year-chart"></canvas></div>
+    <div class="note">Grey: actual kWh. Green: the forecast made each morning for that day. Dashed green: the latest forecast for the
+      coming days to year end. The shaded band is the period selected above. When a meter stopped reporting for a while, the
+      energy it recorded on its return is shown spread over the missing days.</div>
+  </div>
+
+  <h2>Accuracy by month <small>forecasts for the selected meter, zone or facility</small></h2>
+  <div class="scroll"><table id="month-table"></table></div>
+
+  <div class="table-head">
+    <h2>All <span id="all-what">zones</span> at a glance <small>accuracy by month · click a row to open it</small></h2>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="seg small" id="ov-level"><button data-l="zone" class="on">Zones</button><button data-l="meter">Meters</button></div>
+      <div class="seg small" id="ov-h">
+        <button data-h="1 day" class="on">Next day</button><button data-h="7 days">7 days</button>
+        <button data-h="30 days">30 days</button><button data-h="calendar month">Whole month</button>
+      </div>
+    </div>
+  </div>
+  <div class="scroll capped"><table id="overview"></table></div>
+  <div class="key">
+    <span><i style="background:var(--good-bg)"></i>90% and above</span>
+    <span><i style="background:var(--ok-bg)"></i>80–90%</span>
+    <span><i style="background:var(--warn-bg)"></i>70–80%</span>
+    <span><i style="background:var(--bad-bg)"></i>below 70%</span>
+    <span>– not scored: meter data gap or meter switched off</span>
+    <span>0% = the error was as large as the actual consumption, or larger</span>
+  </div>
+</div>
+</main>
+<script>/*__CHART_JS__*/</script>
+<script>
+const D = /*__DATA__*/null;
+const X = D.explorer, T = D.meta.target, K = X.days;
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const HNAME = {1: "Day", 7: "7 days", 30: "30 days"};
+const HKEY = {1: "1 day", 7: "7 days", 30: "30 days"};
+const TRACK = {"1 day": "Next day", "7 days": "Next 7 days", "30 days": "Next 30 days", "calendar month": "Whole month"};
+const TRACK_NOTE = {"1 day": "made each morning, for that day", "7 days": "made each morning, for the next 7 days",
+  "30 days": "made each morning, for the next 30 days", "calendar month": "made on the 1st, for the whole month"};
+
+// ---------- dates ----------
+const DAY = 86400000;
+const toMs = s => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10));
+const iso = ms => new Date(ms).toISOString().slice(0, 10);
+const addDays = (s, n) => iso(toMs(s) + n * DAY);
+const nice = s => `${+s.slice(8, 10)} ${MONTHS[+s.slice(5, 7) - 1]} ${s.slice(0, 4)}`;
+const short = s => `${+s.slice(8, 10)} ${MONTHS[+s.slice(5, 7) - 1]}`;
+const span = (a, b) => a === b ? nice(a) : `${short(a)} – ${nice(b)}`;
+const MORNINGS = X.mornings, LAST_MORNING = MORNINGS[MORNINGS.length - 1];
+const FUT = D.dates.future, ISSUE = D.meta.issue_date, LAST_DAY = FUT[FUT.length - 1];
+const mIdx = Object.fromEntries(MORNINGS.map((d, i) => [d, i]));
+const fIdx = Object.fromEntries(FUT.map((d, i) => [d, i]));
+
+// ---------- numbers ----------
+const kwh = v => v == null ? "–" : v.toLocaleString("en-US", {maximumFractionDigits: v < 10000 ? 1 : 0});
+const pct = v => v == null ? "–" : `${v.toFixed(1)}%`;
+const cls = a => a == null ? "c-na" : a >= 90 ? "c-good" : a >= 80 ? "c-ok" : a >= 70 ? "c-warn" : "c-bad";
+const cell = a => a == null ? '<span class="cell c-na">–</span>' : `<span class="cell ${cls(a)}">${a.toFixed(1)}%</span>`;
+const sum = arr => arr.reduce((t, v) => t + (v || 0), 0);
+
+// ---------- units ----------
+const meterZone = {}, unitName = {};
+D.units.forEach(u => { unitName[u.id] = u.name; if (u.level === "meter") meterZone[u.id] = +u.zone.slice(5); });
+const ZONES = D.units.filter(u => u.level === "zone").map(u => +u.id.slice(5));
+const meterIdx = Object.fromEntries(X.meters.map((l, i) => [l, i]));
+const metersOfZone = z => X.meters.filter(l => meterZone[l] === z);
+function members(unit){
+  if (unit === "facility") return X.meters.map((_, i) => i);
+  if (unit.startsWith("zone-")) return metersOfZone(+unit.slice(5)).map(l => meterIdx[l]);
+  return [meterIdx[unit]];
+}
+function title(unit){
+  if (unit === "facility") return `Entire facility · all ${ZONES.length} zones`;
+  if (unit.startsWith("zone-")) { const n = members(unit).length; return `${unitName[unit]} · entire zone (${n} meter${n > 1 ? "s" : ""})`; }
+  return `${unitName[unit]} · Zone ${String(meterZone[unit]).padStart(2, "0")}`;
+}
+
+// ---------- the forecast for any unit, start date and period ----------
+function compute(unit, start, h){
+  const end = addDays(start, h - 1), r = {unit, start, end, h};
+  if (!start || start < "2026-01-01" || start > "2026-12-31") return {...r, error: "Choose a start date in 2026."};
+  if (end > LAST_DAY) return {...r, error: `This ${ADJ[h]} period would end on ${nice(end)}, after the last forecast day (${nice(LAST_DAY)}). Choose a start date up to ${nice(addDays(LAST_DAY, 1 - h))} or a shorter period.`};
+  const mem = members(unit), daily = Array(h).fill(0);
+  if (start in mIdx){
+    const o = mIdx[start], key = String(h);
+    r.mode = "past"; r.issued = start;
+    let A = 0, complete = true, Fs = 0, As = 0, scored = 0;
+    mem.forEach(m => {
+      let f = 0;
+      for (let k = 0; k < h; k++){ const v = X.wf[m][o * K + k]; if (v != null){ daily[k] += v; f += v; } }
+      const a = X.actual[key][m][o];
+      if (a == null) complete = false; else A += a;
+      if (X.scored[key][m][o] === 1){ scored++; Fs += f; As += a; }
+    });
+    r.actual = complete ? A : null;
+    r.scored = scored; r.members = mem.length;
+    r.accuracy = (complete && As > 0) ? Math.max(0, 100 * (1 - Math.abs(Fs - As) / As)) : null;
+    const series = D.series[unit].actual, h0 = mIdx[start];
+    r.actualDaily = Array.from({length: h}, (_, k) => series[h0 + k] ?? null);
+    r.dayMeasured = Array.from({length: h}, (_, k) => mem.every(m => X.measured[m][h0 + k] === "1"));
+    r.readingsComplete = r.dayMeasured.every(Boolean);
+  } else {
+    const f = fIdx[start];
+    r.mode = "future"; r.issued = ISSUE;
+    mem.forEach(m => { const fut = D.series[X.meters[m]].future; for (let k = 0; k < h; k++) daily[k] += fut[f + k] || 0; });
+    r.actual = null; r.accuracy = null; r.actualDaily = Array(h).fill(null);
+  }
+  r.forecastDaily = daily; r.forecast = sum(daily);
+  r.days = Array.from({length: h}, (_, k) => addDays(start, k));
+  return r;
+}
+const ADJ = {1: "1-day", 7: "7-day", 30: "30-day"};
+const actualText = r => r.actual == null ? "–" : (r.actual === 0 && !r.readingsComplete) ? "No readings" : kwh(r.actual);
+function whyNotScored(r){
+  if (r.actual === 0) return r.readingsComplete ? "meter recorded no consumption (switched off)" : "no readings (meter offline)";
+  return r.h === 1 ? "readings for this day are incomplete" : "a meter outage crosses the start or end of this period";
+}
+function status(r){
+  if (r.error) return "Not available";
+  if (r.mode === "future") return "Not happened yet";
+  if (r.actual == null) return `Period not finished (readings to ${nice(LAST_MORNING)})`;
+  if (r.accuracy == null) return `Not scored: ${whyNotScored(r)}`;
+  const partial = r.scored < r.members ? ` · checked on ${r.scored} of ${r.members} meters` : "";
+  return (r.accuracy >= T ? "✓ At or above target" : "✗ Below target") + partial;
+}
+
+// ---------- state ----------
+const B = D.bills;
+const S = {start: ISSUE, unit: "facility", h: 1, ovLevel: "zone", ovH: "1 day", page: "kwh",
+  cycle: Math.max(0, B.cycles.findIndex(c => c.status === "in progress"))};
+function readHash(){
+  const p = new URLSearchParams(location.hash.slice(1));
+  if (p.get("d")) S.start = p.get("d");
+  if (p.get("u") && (p.get("u") === "facility" || unitName[p.get("u")])) S.unit = p.get("u");
+  if ([1, 7, 30].includes(+p.get("h"))) S.h = +p.get("h");
+  if (p.get("p") === "bill") S.page = "bill";
+  if (p.get("c") && B.cycles[+p.get("c") - 1]) S.cycle = +p.get("c") - 1;
+}
+function writeHash(){ try { history.replaceState(null, "",
+  `#p=${S.page}&d=${S.start}&u=${encodeURIComponent(S.unit)}&h=${S.h}&c=${S.cycle + 1}`); } catch (e) {} }
+
+// ---------- controls ----------
+const elStart = document.getElementById("start"), elZone = document.getElementById("zone"), elMeter = document.getElementById("meter");
+const bZone = document.getElementById("b-zone"), bMeter = document.getElementById("b-meter"), bCycle = document.getElementById("b-cycle");
+const zoneOptions = `<option value="all">All zones (entire facility)</option>` +
+  ZONES.map(z => `<option value="${z}">Zone ${String(z).padStart(2, "0")}</option>`).join("");
+elZone.innerHTML = zoneOptions; bZone.innerHTML = zoneOptions;
+bZone.onchange = () => { S.unit = bZone.value === "all" ? "facility" : `zone-${bZone.value}`; render(); };
+bMeter.onchange = () => { S.unit = bMeter.value; render(); };
+function zoneOfUnit(u){ return u === "facility" ? "all" : u.startsWith("zone-") ? +u.slice(5) : meterZone[u]; }
+function fillUnitSelects(zEl, mEl){
+  const z = zoneOfUnit(S.unit);
+  zEl.value = String(z);
+  if (z === "all"){ mEl.innerHTML = `<option value="facility">Entire facility</option>`; mEl.value = "facility"; return; }
+  mEl.innerHTML = `<option value="zone-${z}">Entire zone</option>` +
+    metersOfZone(z).map(l => `<option value="${l}">${unitName[l]}</option>`).join("");
+  mEl.value = S.unit;
+}
+function fillMeters(){ fillUnitSelects(elZone, elMeter); fillUnitSelects(bZone, bMeter); }
+elStart.onchange = () => { S.start = elStart.value; render(); };
+elZone.onchange = () => { S.unit = elZone.value === "all" ? "facility" : `zone-${elZone.value}`; render(); };
+elMeter.onchange = () => { S.unit = elMeter.value; render(); };
+document.querySelectorAll("#period button").forEach(b => b.onclick = () => { S.h = +b.dataset.h; render(); });
+document.querySelectorAll("#ov-level button").forEach(b => b.onclick = () => { S.ovLevel = b.dataset.l; overview(); });
+document.querySelectorAll("#ov-h button").forEach(b => b.onclick = () => { S.ovH = b.dataset.h; overview(); });
+function select(unit){ S.unit = unit; render(); window.scrollTo({top: 0, behavior: "smooth"}); }
+
+// ---------- explorer ----------
+function explorer(){
+  const r = compute(S.unit, S.start, S.h);
+  document.getElementById("start-error").textContent = r.error || "";
+  document.getElementById("sel-title").textContent = title(S.unit);
+  document.getElementById("sel-chip").textContent = r.error ? "" : r.mode === "past"
+    ? `Forecast made on the morning of ${nice(r.issued)}, with readings up to ${nice(addDays(r.issued, -1))}`
+    : `Latest forecast, made ${nice(ISSUE)} with readings up to ${nice(addDays(ISSUE, -1))}`;
+  const unitTxt = '<span class="unit">kWh</span>';
+  document.getElementById("pred-value").innerHTML = r.error ? "–" : `${kwh(r.forecast)}${unitTxt}`;
+  document.getElementById("pred-period").textContent = r.error ? "Choose another start date or a shorter period."
+    : `${span(r.start, r.end)} · ${S.h === 1 ? "1 day" : HNAME[S.h]}`;
+
+  const act = document.getElementById("act-value"), actNote = document.getElementById("act-note");
+  if (r.error){ act.className = "mid text"; act.textContent = "–"; actNote.textContent = ""; }
+  else if (r.mode === "future"){ act.className = "mid text"; act.textContent = "Not available yet";
+    actNote.textContent = `This period is still ahead. Actual readings run to ${nice(LAST_MORNING)}.`; }
+  else if (r.actual == null){ act.className = "mid text"; act.textContent = "Period not finished";
+    actNote.textContent = `The period ends ${nice(r.end)}; readings run to ${nice(LAST_MORNING)}.`; }
+  else if (r.actual === 0 && !r.readingsComplete){ act.className = "mid text"; act.textContent = "No readings";
+    actNote.textContent = "The meter(s) were offline. The energy they used is booked on the day they come back online, so the chart shows it spread over the offline days as an estimate."; }
+  else if (r.actual === 0){ act.className = "mid"; act.innerHTML = `0${unitTxt}`;
+    actNote.textContent = "The meter reported normally but recorded no consumption (switched off)."; }
+  else { act.className = "mid"; act.innerHTML = `${kwh(r.actual)}${unitTxt}`;
+    const diff = r.forecast - r.actual;
+    actNote.textContent = `Validated meter readings (gold layer). Forecast was ${kwh(Math.abs(diff))} kWh ${diff >= 0 ? "higher" : "lower"}.` +
+      (r.scored < r.members ? ` ${r.members - r.scored} of ${r.members} meters had incomplete readings in this period.` : ""); }
+
+  const acc = document.getElementById("acc-value"), badge = document.getElementById("acc-badge"), accNote = document.getElementById("acc-note");
+  const tested = ((D.accuracy[S.unit] || {})[HKEY[S.h]] || {}).overall;
+  const kind = {1: "next-day", 7: "7-day", 30: "30-day"}[S.h];
+  const who = S.unit === "facility" ? "the facility" : unitName[S.unit];
+  const testedTxt = tested == null ? "" : `Track record: in 2026, ${kind} forecasts for ${who} averaged ${pct(tested)} accuracy.`;
+  if (r.error || r.mode === "future" || r.actual == null){
+    acc.className = "mid text"; acc.textContent = r.error ? "–" : "Not measured yet";
+    badge.innerHTML = tested == null ? "" : `<span class="badge ${tested >= T ? "good" : "bad"}">Track record ${pct(tested)}</span>`;
+    accNote.textContent = testedTxt;
+  } else if (r.accuracy == null){
+    acc.className = "mid text"; acc.textContent = "Not scored";
+    badge.innerHTML = `<span class="badge na">${whyNotScored(r)}</span>`;
+    const why = r.actual === 0 ? (r.readingsComplete ? "There is no consumption to compare with." : "There are no readings to compare with.")
+      : r.h === 1 ? "The meter readings do not cover this whole day, so the booked kWh is not the energy used that day."
+      : "A meter outage crosses the start or end of this period, so the booked total also contains energy from outside it.";
+    accNote.textContent = `${why} ${testedTxt}`;
+  } else {
+    acc.className = "mid"; acc.textContent = pct(r.accuracy);
+    const good = r.accuracy >= T;
+    badge.innerHTML = `<span class="badge ${good ? "good" : "bad"}">${good ? "✓ above" : "✗ below"} ${T}% target</span>`;
+    accNote.textContent = (r.scored < r.members ? `Checked on the ${r.scored} of ${r.members} meters with complete readings. ` : "") + testedTxt;
+  }
+  periodChart(r);
+  three();
+  breakdown();
+  writeHash();
+}
+
+let pChart, yChart;
+function periodChart(r){
+  const note = document.getElementById("period-chart-note");
+  const labels = r.error ? [] : r.days.map(short);
+  const data = {labels, datasets: [
+    {label: "Forecast", data: r.error ? [] : r.forecastDaily.map(v => +v.toFixed(1)), backgroundColor: "#2e7d6b", borderRadius: 3},
+    {label: "Actual", data: r.error ? [] : r.actualDaily, borderRadius: 3,
+     backgroundColor: r.error || !r.dayMeasured ? "#b5bcc0" : r.dayMeasured.map(ok => ok ? "#b5bcc0" : "#e2e5e7")},
+  ]};
+  const estimated = r.dayMeasured && r.dayMeasured.some(ok => !ok);
+  note.textContent = r.error ? "" : r.mode === "future" ? "Actual bars appear as the days happen."
+    : "Forecast bars: what was forecast on the start morning for each day. Actual bars: measured kWh per day." +
+      (estimated ? " Lighter bars are estimates for days when a meter was offline (its energy, booked on its return, spread over the offline days)." : "");
+  if (pChart){ pChart.data = data; pChart.update(); return; }
+  pChart = new Chart(document.getElementById("period-chart"), {type: "bar", data, options: {
+    responsive: true, maintainAspectRatio: false, animation: false,
+    plugins: {legend: {position: "top", align: "end", labels: {boxWidth: 14}},
+      tooltip: {callbacks: {label: c => `${c.dataset.label}: ${c.parsed.y == null ? "–" : kwh(c.parsed.y)} kWh`}}},
+    scales: {x: {grid: {display: false}, ticks: {maxTicksLimit: 16}}, y: {beginAtZero: true, title: {display: true, text: "kWh per day"}, grid: {color: "#efeee9"}}}}});
+}
+
+function three(){
+  document.getElementById("three-title").textContent = `Starting ${nice(S.start || ISSUE)}`;
+  document.getElementById("three").innerHTML = [1, 7, 30].map(h => {
+    const r = compute(S.unit, S.start, h);
+    if (r.error) return `<div class="row${h === S.h ? " on" : ""}" data-h="${h}"><div class="name">${HNAME[h]}</div>
+      <div class="vals">–</div><div class="detail">Runs past the last forecast day.</div></div>`;
+    const actualLine = actualText(r) === "No readings" ? "no readings" : `${actualText(r)} kWh actual`;
+    const right = r.actual != null ? `${kwh(r.forecast)} kWh forecast<br><span class="note">${actualLine}</span>` : `${kwh(r.forecast)} kWh forecast`;
+    return `<div class="row${h === S.h ? " on" : ""}" data-h="${h}"><div class="name">${HNAME[h]}<div class="note">${span(r.start, r.end)}</div></div>
+      <div class="vals">${right}</div><div class="detail">${r.accuracy != null ? cell(r.accuracy) + " " : ""}${status(r)}</div></div>`;
+  }).join("");
+  document.querySelectorAll("#three .row").forEach(el => el.onclick = () => { S.h = +el.dataset.h; render(); });
+}
+
+let tableRows = [];
+function breakdown(){
+  const z = zoneOfUnit(S.unit);
+  let units, totalUnit, what;
+  if (z === "all"){ units = ZONES.map(n => `zone-${n}`); totalUnit = "facility"; what = "All zones"; }
+  else { units = metersOfZone(z); totalUnit = `zone-${z}`; what = `Meters in Zone ${String(z).padStart(2, "0")}`; }
+  const r0 = compute(S.unit, S.start, S.h);
+  document.getElementById("table-title").textContent = r0.error ? what : `${what} · ${span(r0.start, r0.end)} · ${HNAME[S.h] === "Day" ? "1 day" : HNAME[S.h]}`;
+  tableRows = units.map(u => ({u, r: compute(u, S.start, S.h)})).concat([{u: totalUnit, r: compute(totalUnit, S.start, S.h), total: true}]);
+  const body = tableRows.map(({u, r, total}) => `<tr class="${total ? "total" : "pick"}${u === S.unit ? " sel" : ""}" data-id="${u}">
+      <td>${total ? (u === "facility" ? "Facility total" : "Zone total") : unitName[u]}</td>
+      <td>${r.error ? "–" : kwh(r.forecast)}</td><td>${actualText(r)}</td>
+      <td>${cell(r.accuracy)}</td><td class="why">${status(r)}</td></tr>`).join("");
+  const t = document.getElementById("breakdown");
+  t.innerHTML = `<thead><tr><th>${z === "all" ? "Zone" : "Meter"}</th><th>Forecast kWh</th><th>Actual kWh</th><th>Accuracy</th><th style="text-align:left">Result</th></tr></thead><tbody>${body}</tbody>`;
+  t.querySelectorAll("tr.pick, tr.total").forEach(row => row.onclick = () => select(row.dataset.id));
+}
+document.getElementById("download").onclick = () => {
+  const q = v => `"${String(v).replace(/"/g, '""')}"`;
+  const lines = [["Selection", title(S.unit)], ["Start date", S.start], ["Period (days)", S.h], [],
+    ["Name", "Forecast kWh", "Actual kWh", "Accuracy %", "Result"]].map(r => r.map(q).join(","));
+  tableRows.forEach(({u, r, total}) => lines.push([total ? (u === "facility" ? "Facility total" : "Zone total") : unitName[u],
+    r.error ? "" : r.forecast.toFixed(1), actualText(r) === "No readings" ? "no readings" : r.actual == null ? "" : r.actual.toFixed(1),
+    r.accuracy == null ? "" : r.accuracy.toFixed(1), status(r)].map(q).join(",")));
+  const blob = new Blob([lines.join("\r\n")], {type: "text/csv"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `SADIN_forecast_${(unitName[S.unit] || "facility").replace(/[^A-Za-z0-9.-]+/g, "_")}_${S.start}_${S.h}d.csv`;
+  a.click();
+};
+
+// ---------- what is coming ----------
+function coming(){
+  const fut = D.series[S.unit].future;
+  const add = n => sum(fut.slice(0, n));
+  const o = D.outlook[S.unit] || {};
+  const months = Object.keys(o).sort();
+  const total = months.reduce((t, m) => t + o[m].actual + o[m].forecast, 0);
+  const mName = m => `${MONTHS[+m.slice(5, 7) - 1]} ${m.slice(0, 4)}`;
+  const cards = [["Next 7 days", add(7), span(FUT[0], FUT[6])], ["Next 30 days", add(30), span(FUT[0], FUT[29])]];
+  months.filter(m => o[m].forecast > 0).forEach(m => cards.push([mName(m), o[m].actual + o[m].forecast,
+    o[m].actual > 0 ? `${kwh(o[m].actual)} actual + ${kwh(o[m].forecast)} forecast` : "forecast"]));
+  cards.push(["Year 2026 outlook", total, "actual to date + forecast to 31 Dec"]);
+  document.getElementById("coming-sub").textContent = `${unitName[S.unit] || "Facility"} · kWh · from the latest forecast (${nice(ISSUE)})`;
+  document.getElementById("coming").innerHTML = cards.slice(0, 6).map(([l, v, n]) =>
+    `<div class="card kpi"><div class="label">${l}</div><div class="value small">${kwh(v)}</div><div class="knote">${n}</div></div>`).join("");
+  const L = D.long_range || {};
+  document.getElementById("long-note").textContent = Object.keys(L).length ?
+    `How far ahead to trust it: facility forecasts made on the 1st of each month since Sep 2025 were ${L["1-30 days ahead"]}% accurate ` +
+    `for the next 30 days, ${L["31-60 days ahead"]}% for days 31–60 and ${L["61-90 days ahead"]}% for days 61–90. ` +
+    `The forecast is updated every morning, so later months sharpen as they get closer.` : "";
+}
+
+// ---------- track record ----------
+function track(){
+  const a = D.accuracy[S.unit] || {};
+  document.getElementById("track-sub").textContent = `${unitName[S.unit] || "Facility"} · every forecast since ${D.meta.validation_from} compared with the validated actual kWh`;
+  document.getElementById("acc-cards").innerHTML = ["1 day", "7 days", "30 days", "calendar month"].map(h => {
+    const x = a[h];
+    if (!x || x.overall == null) return `<div class="card kpi"><div class="label">${TRACK[h]} forecast</div><div class="value">–</div><div class="knote">no measurable period</div></div>`;
+    const good = x.overall >= T;
+    return `<div class="card kpi"><div class="label">${TRACK[h]} forecast</div><div class="value">${pct(x.overall)}</div>
+      <span class="badge ${good ? "good" : "bad"}">${good ? "✓ above" : "✗ below"} ${T}% target</span>
+      <div class="knote">${TRACK_NOTE[h]} · ${x.periods.toLocaleString()} checked</div></div>`;
+  }).join("");
+}
+
+const shade = {id: "shade", beforeDatasetsDraw(c){
+  const w = c.options.plugins.shade; if (!w || w.from == null) return;
+  const x = c.scales.x, a = x.getPixelForValue(w.from), b = x.getPixelForValue(w.to), {top, bottom} = c.chartArea;
+  c.ctx.save(); c.ctx.fillStyle = "rgba(46,125,107,0.12)"; c.ctx.fillRect(Math.min(a, b) - 2, top, Math.abs(b - a) + 4, bottom - top); c.ctx.restore();
+}};
+function yearChart(){
+  const s = D.series[S.unit], H = D.dates.history, labels = H.concat(FUT);
+  const pad = (arr, before, after) => Array(before).fill(null).concat(arr, Array(after).fill(null));
+  const from = labels.indexOf(S.start), to = labels.indexOf(addDays(S.start, S.h - 1));
+  const data = {labels, datasets: [
+    {label: "Actual", data: pad(s.actual, 0, FUT.length), borderColor: "#8d969c", borderWidth: 1.5, pointRadius: 0},
+    {label: "Forecast (made that morning)", data: pad(s.forecast, 0, FUT.length), borderColor: "#2e7d6b", borderWidth: 1.5, pointRadius: 0},
+    {label: "Latest forecast to year end", data: pad(s.future, H.length, 0), borderColor: "#2e7d6b", borderDash: [5, 4], borderWidth: 1.8, pointRadius: 0},
+  ]};
+  const shadeOpt = from >= 0 && to >= 0 ? {from, to} : {from: null};
+  if (yChart){ yChart.data = data; yChart.options.plugins.shade = shadeOpt; yChart.update(); return; }
+  yChart = new Chart(document.getElementById("year-chart"), {type: "line", data, plugins: [shade], options: {
+    responsive: true, maintainAspectRatio: false, animation: false, interaction: {mode: "index", intersect: false},
+    plugins: {shade: shadeOpt, legend: {position: "top", align: "end", labels: {boxWidth: 14}},
+      tooltip: {callbacks: {title: i => nice(i[0].label), label: c => `${c.dataset.label}: ${c.parsed.y == null ? "–" : kwh(c.parsed.y)} kWh`}}},
+    scales: {x: {grid: {display: false}, ticks: {maxTicksLimit: 12, callback(v){ return short(this.getLabelForValue(v)); }}},
+             y: {beginAtZero: true, title: {display: true, text: "kWh per day"}, grid: {color: "#efeee9"}}}}});
+}
+
+function monthTable(){
+  const a = D.accuracy[S.unit] || {}, cm = {};
+  (D.calendar_months[S.unit] || []).forEach(r => cm[r.month] = r);
+  const months = new Set();
+  ["1 day", "7 days", "30 days"].forEach(h => a[h] && Object.keys(a[h].months).forEach(m => months.add(m)));
+  Object.keys(cm).forEach(m => months.add(m));
+  const mName = m => `${MONTHS[+m.slice(5, 7) - 1]} ${m.slice(0, 4)}`;
+  const rows = [...months].sort().map(m => { const c = cm[m]; return `<tr><td>${mName(m)}</td>
+    <td>${cell(a["1 day"] && a["1 day"].months[m])}</td><td>${cell(a["7 days"] && a["7 days"].months[m])}</td>
+    <td>${cell(a["30 days"] && a["30 days"].months[m])}</td><td>${c ? kwh(c.forecast) : "–"}</td><td>${c ? kwh(c.actual) : "–"}</td>
+    <td>${cell(c ? c.accuracy : null)}</td></tr>`; }).join("");
+  document.getElementById("month-table").innerHTML = `<thead><tr><th>Month</th><th>Next-day forecasts</th><th>7-day forecasts</th>
+    <th>30-day forecasts</th><th>Whole-month forecast kWh</th><th>Actual month kWh</th><th>Whole-month accuracy</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+function overview(){
+  const lv = S.ovLevel;
+  document.querySelectorAll("#ov-level button").forEach(b => b.classList.toggle("on", b.dataset.l === lv));
+  document.querySelectorAll("#ov-h button").forEach(b => b.classList.toggle("on", b.dataset.h === S.ovH));
+  document.getElementById("all-what").textContent = lv === "zone" ? "zones" : "meters";
+  const list = D.units.filter(u => u.level === lv), months = new Set();
+  list.forEach(u => { const x = (D.accuracy[u.id] || {})[S.ovH]; x && Object.keys(x.months).forEach(m => months.add(m)); });
+  const ms = [...months].sort();
+  const head = `<thead><tr><th>${lv === "zone" ? "Zone" : "Meter"}</th><th>2026 overall</th>${ms.map(m => `<th>${MONTHS[+m.slice(5, 7) - 1]}</th>`).join("")}</tr></thead>`;
+  const body = list.map(u => { const x = (D.accuracy[u.id] || {})[S.ovH];
+    return `<tr class="pick${u.id === S.unit ? " sel" : ""}" data-id="${u.id}"><td>${u.name}${u.zone ? ` <span class="note">· ${u.zone}</span>` : ""}</td>
+      <td>${cell(x ? x.overall : null)}</td>${ms.map(m => `<td>${cell(x ? x.months[m] : null)}</td>`).join("")}</tr>`; }).join("");
+  const t = document.getElementById("overview");
+  t.innerHTML = head + `<tbody>${body}</tbody>`;
+  t.querySelectorAll("tr.pick").forEach(r => r.onclick = () => select(r.dataset.id));
+}
+
+// ---------- bill forecast page ----------
+const BP = Object.fromEntries(B.parts.map((p, i) => [p, i]));
+const sar = v => v == null ? "–" : v.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const rate = v => v.toFixed(2);
+const STATUS = {"completed": "completed", "in progress": "in progress", "upcoming": "upcoming", "runs into 2027": "runs into 2027"};
+const labelsOf = unit => members(unit).map(i => X.meters[i]);
+function billSum(labels, ci, kind){
+  const out = Array(B.parts.length).fill(0);
+  for (const l of labels){ const v = B.meters[l][kind][ci]; if (!v) return null; v.forEach((x, j) => out[j] += x); }
+  return out;
+}
+const pick = (v, part) => v ? v[BP[part]] : null;
+bCycle.innerHTML = B.cycles.map((c, i) => `<option value="${i}">Cycle ${c.n} · ${span(c.start, c.end)} · ${STATUS[c.status]}</option>`).join("");
+bCycle.onchange = () => { S.cycle = +bCycle.value; render(); };
+const T_ = B.tariff;
+document.getElementById("b-tariff").innerHTML =
+  `First ${T_.limit.toLocaleString()} kWh: <b>${rate(T_.low)}</b> SAR/kWh<br>Above ${T_.limit.toLocaleString()} kWh: <b>${rate(T_.high)}</b> SAR/kWh<br>+ service fee, + ${Math.round(T_.vat * 100)}% VAT`;
+document.getElementById("b-rules").innerHTML = [
+  `Each meter gets its own bill every <b>30 days</b>, counted from 1 January 2026 (1–30 Jan, 31 Jan–1 Mar, 2–31 Mar, …).`,
+  `<b>Energy charge:</b> the first ${T_.limit.toLocaleString()} kWh of the 30 days at ${rate(T_.low)} SAR/kWh; every kWh above ${T_.limit.toLocaleString()} at ${rate(T_.high)} SAR/kWh.`,
+  `<b>Service fee</b> by the meter's circuit-breaker size: ${T_.classes.map(([c, f]) => `${c} ${f} SAR`).join(", ")} (Class I under 100 A, II 100–199 A, III 200–299 A, IV 300–399 A, V exactly 400 A, VI above 400 A).`,
+  `<b>VAT:</b> bill = (energy charge + service fee) × ${(1 + T_.vat).toFixed(2)}.`,
+  `<b>Example:</b> 10,580 kWh on a 100 A breaker = (6,000 × 0.22 + 4,580 × 0.32 + 15) × 1.15 = <b>3,220.69 SAR</b>.`,
+].map(s => `<li>${s}</li>`).join("");
+
+function renderBill(){
+  const ci = S.cycle, c = B.cycles[ci], labels = labelsOf(S.unit);
+  const p = billSum(labels, ci, "predicted"), a = c.status === "completed" ? billSum(labels, ci, "actual") : null;
+  const partial = c.status === "runs into 2027";
+  bCycle.value = String(ci);
+  document.getElementById("b-title").textContent = title(S.unit);
+  document.getElementById("b-chip").textContent = `Cycle ${c.n} · ${span(c.start, c.end)} · kWh from the ${c.basis}`;
+  const sarUnit = '<span class="unit">SAR</span>', kwhUnit = '<span class="unit">kWh</span>';
+  document.getElementById("b-bill").innerHTML = partial ? "–" : `${sar(pick(p, "bill_sar"))}${sarUnit}`;
+  document.getElementById("b-bill-sub").textContent = partial
+    ? `This cycle ends ${nice(c.end)}, after the forecast's last day (${nice(LAST_DAY)}); its bill cannot be predicted yet.`
+    : `Cycle ${c.n} · ${span(c.start, c.end)} · including ${Math.round(T_.vat * 100)}% VAT`;
+  document.getElementById("b-kwh").innerHTML = `${kwh(pick(p, "kwh"))}${kwhUnit}`;
+  document.getElementById("b-kwh-sub").textContent = partial
+    ? `Forecast for ${short(c.start)} – ${nice(LAST_DAY)} only (${c.days} of 30 days).`
+    : `${kwh(pick(p, "kwh_at_022"))} kWh at ${rate(T_.low)} + ${kwh(pick(p, "kwh_at_032"))} kWh at ${rate(T_.high)} SAR/kWh`;
+  const third = document.getElementById("b-third"), thirdTitle = document.getElementById("b-third-title"), thirdSub = document.getElementById("b-third-sub");
+  if (a){
+    thirdTitle.textContent = "Bill on the actual metered kWh";
+    third.className = "mid"; third.innerHTML = `${sar(pick(a, "bill_sar"))}${sarUnit}`;
+    const d = pick(p, "bill_sar") - pick(a, "bill_sar");
+    thirdSub.textContent = `Actual ${kwh(pick(a, "kwh"))} kWh in this cycle. The predicted bill was ${sar(Math.abs(d))} SAR ${d >= 0 ? "higher" : "lower"}.`;
+  } else if (labels.length === 1){
+    const m = B.meters[labels[0]];
+    thirdTitle.textContent = "Service fee";
+    third.className = "mid"; third.innerHTML = `${sar(m.fee)}${sarUnit}`;
+    thirdSub.textContent = `${m.class} · ${m.breaker_a} A circuit breaker · charged every cycle`;
+  } else {
+    thirdTitle.textContent = "Service fees";
+    third.className = "mid"; third.innerHTML = `${sar(pick(p, "service_fee_sar"))}${sarUnit}`;
+    thirdSub.textContent = `${labels.length} meters, each charged by its circuit-breaker size`;
+  }
+  billBreakdown(p, a, partial);
+  billMeters(ci, a != null);
+  billYear();
+  writeHash();
+}
+
+function billBreakdown(p, a, partial){
+  const rows = [
+    [`Energy, first ${T_.limit.toLocaleString()} kWh × ${rate(T_.low)}`, "kwh_at_022", "energy_022_sar"],
+    [`Energy, above ${T_.limit.toLocaleString()} kWh × ${rate(T_.high)}`, "kwh_at_032", "energy_032_sar"],
+    ["Service fee (circuit breaker)", null, "service_fee_sar"],
+  ];
+  const sub = v => v ? v[BP.energy_022_sar] + v[BP.energy_032_sar] + v[BP.service_fee_sar] : null;
+  const col = v => (k, s) => `<td>${k && v ? kwh(pick(v, k)) + " kWh" : ""}</td><td>${partial ? "–" : sar(pick(v, s))}</td>`;
+  const head = `<thead><tr><th></th><th>Predicted kWh</th><th>Predicted SAR</th>${a ? "<th>Actual kWh</th><th>On actual SAR</th>" : ""}</tr></thead>`;
+  const body = rows.map(([name, k, s]) => `<tr><td>${name}</td>${col(p)(k, s)}${a ? col(a)(k, s) : ""}</tr>`).join("") +
+    `<tr><td>Subtotal before VAT</td><td></td><td>${partial ? "–" : sar(sub(p))}</td>${a ? `<td></td><td>${sar(sub(a))}</td>` : ""}</tr>` +
+    `<tr><td>VAT ${Math.round(T_.vat * 100)}%</td><td></td><td>${partial ? "–" : sar(pick(p, "vat_sar"))}</td>${a ? `<td></td><td>${sar(pick(a, "vat_sar"))}</td>` : ""}</tr>` +
+    `<tr class="total"><td>Total bill</td><td></td><td>${partial ? "–" : sar(pick(p, "bill_sar"))}</td>${a ? `<td></td><td>${sar(pick(a, "bill_sar"))}</td>` : ""}</tr>`;
+  document.getElementById("b-breakdown").innerHTML = head + `<tbody>${body}</tbody>`;
+  document.getElementById("b-breakdown-note").textContent = labelsOf(S.unit).length > 1
+    ? "For a zone or the facility these are the sums of the individual meter bills (the 6,000 kWh step is applied to each meter separately)." : "";
+}
+
+let billRows = [];
+function billMeters(ci, withActual){
+  const z = zoneOfUnit(S.unit), c = B.cycles[ci], partial = c.status === "runs into 2027";
+  const labels = z === "all" ? X.meters.slice().sort((x, y) => meterZone[x] - meterZone[y] || unitName[x].localeCompare(unitName[y], undefined, {numeric: true}))
+    : metersOfZone(z);
+  document.getElementById("b-table-title").textContent =
+    `${z === "all" ? "Every meter" : `Meters in Zone ${String(z).padStart(2, "0")}`} · cycle ${c.n} (${span(c.start, c.end)})`;
+  billRows = labels.map(l => ({l, m: B.meters[l], p: B.meters[l].predicted[ci], a: withActual ? B.meters[l].actual[ci] : null}));
+  const total = {p: billSum(labels, ci, "predicted"), a: withActual ? billSum(labels, ci, "actual") : null};
+  const cells = (p, a) => `<td>${kwh(pick(p, "kwh"))}</td><td>${partial ? "–" : sar(pick(p, "energy_022_sar") + pick(p, "energy_032_sar"))}</td>
+    <td>${sar(pick(p, "service_fee_sar"))}</td><td>${partial ? "–" : sar(pick(p, "vat_sar"))}</td><td><b>${partial ? "–" : sar(pick(p, "bill_sar"))}</b></td>
+    ${withActual ? `<td>${kwh(pick(a, "kwh"))}</td><td>${sar(pick(a, "bill_sar"))}</td>` : ""}`;
+  const head = `<thead><tr><th>Meter</th>${z === "all" ? "<th>Zone</th>" : ""}<th>Breaker</th><th>Fee class</th><th>Predicted kWh</th>
+    <th>Energy SAR</th><th>Service fee</th><th>VAT</th><th>Predicted bill SAR</th>${withActual ? "<th>Actual kWh</th><th>Bill on actual SAR</th>" : ""}</tr></thead>`;
+  const body = billRows.map(({l, m, p, a}) => `<tr class="pick${l === S.unit ? " sel" : ""}" data-id="${l}"><td>${unitName[l]}</td>
+      ${z === "all" ? `<td>${String(meterZone[l]).padStart(2, "0")}</td>` : ""}<td>${m.breaker_a} A</td><td>${m.class}</td>${cells(p, a)}</tr>`).join("") +
+    `<tr class="total"><td>${z === "all" ? "Facility total" : "Zone total"}</td>${z === "all" ? "<td></td>" : ""}<td></td><td></td>${cells(total.p, total.a)}</tr>`;
+  const t = document.getElementById("b-meters");
+  t.innerHTML = head + `<tbody>${body}</tbody>`;
+  t.querySelectorAll("tr.pick").forEach(r => r.onclick = () => { S.unit = r.dataset.id; render(); window.scrollTo({top: 0, behavior: "smooth"}); });
+  billRows.total = total;
+}
+document.getElementById("b-download").onclick = () => {
+  const c = B.cycles[S.cycle], q = v => `"${String(v).replace(/"/g, '""')}"`, withActual = c.status === "completed";
+  const lines = [["Bill forecast", title(S.unit)], ["Cycle", `${c.n} (${c.start} to ${c.end})`], ["kWh basis", c.basis], [],
+    ["Meter", "Zone", "Breaker A", "Fee class", "Predicted kWh", "kWh at 0.22", "kWh at 0.32", "Energy SAR", "Service fee SAR", "VAT SAR", "Predicted bill SAR"]
+      .concat(withActual ? ["Actual kWh", "Bill on actual SAR"] : [])].map(r => r.map(q).join(","));
+  billRows.forEach(({l, m, p, a}) => lines.push([unitName[l], meterZone[l], m.breaker_a, m.class, pick(p, "kwh"), pick(p, "kwh_at_022"),
+    pick(p, "kwh_at_032"), (pick(p, "energy_022_sar") + pick(p, "energy_032_sar")).toFixed(2), pick(p, "service_fee_sar"), pick(p, "vat_sar"),
+    pick(p, "bill_sar")].concat(withActual ? [pick(a, "kwh"), pick(a, "bill_sar")] : []).map(q).join(",")));
+  const blob = new Blob([lines.join("\r\n")], {type: "text/csv"});
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `SADIN_bill_forecast_${(unitName[S.unit] || "facility").replace(/[^A-Za-z0-9.-]+/g, "_")}_cycle${c.n}.csv`;
+  link.click();
+};
+
+function billYear(){
+  const labels = labelsOf(S.unit);
+  document.getElementById("b-year-sub").textContent = `${unitName[S.unit] || "Facility"} · click a cycle to open it`;
+  let pt = 0, at = 0, aCount = 0;
+  const rows = B.cycles.map((c, i) => {
+    const p = billSum(labels, i, "predicted"), a = c.status === "completed" ? billSum(labels, i, "actual") : null;
+    const partial = c.status === "runs into 2027";
+    if (!partial) pt += pick(p, "bill_sar");
+    if (a){ at += pick(a, "bill_sar"); aCount++; }
+    return `<tr class="pick${i === S.cycle ? " sel" : ""}" data-c="${i}"><td>Cycle ${c.n}</td><td style="text-align:left">${span(c.start, c.end)}</td>
+      <td style="text-align:left">${STATUS[c.status]}</td><td>${kwh(pick(p, "kwh"))}${partial ? ` <span class="note">(${c.days} days)</span>` : ""}</td>
+      <td><b>${partial ? "–" : sar(pick(p, "bill_sar"))}</b></td><td>${a ? kwh(pick(a, "kwh")) : "–"}</td><td>${a ? sar(pick(a, "bill_sar")) : "–"}</td></tr>`;
+  }).join("");
+  const t = document.getElementById("b-year");
+  t.innerHTML = `<thead><tr><th>Cycle</th><th style="text-align:left">Dates</th><th style="text-align:left">Status</th><th>Predicted kWh</th>
+    <th>Predicted bill SAR</th><th>Actual kWh</th><th>Bill on actual SAR</th></tr></thead><tbody>${rows}
+    <tr class="total"><td>2026 total</td><td style="text-align:left">cycles 1–12</td><td></td><td></td><td>${sar(pt)}</td><td></td>
+    <td>${sar(at)} <span class="note">(${aCount} completed)</span></td></tr></tbody>`;
+  t.querySelectorAll("tr.pick").forEach(r => r.onclick = () => { S.cycle = +r.dataset.c; render(); window.scrollTo({top: 0, behavior: "smooth"}); });
+  document.getElementById("b-year-note").textContent =
+    "Completed cycles use the forecast made on the cycle's first morning; the cycle in progress uses the actual kWh so far plus the latest forecast; " +
+    "upcoming cycles use the latest forecast. Cycle 13 ends in 2027, after the forecast's last day, so only its first days are shown.";
+}
+
+document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => { S.page = b.dataset.page; render(); window.scrollTo({top: 0}); });
+
+function render(){
+  fillMeters();
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.page === S.page));
+  document.getElementById("page-kwh").hidden = S.page !== "kwh";
+  document.getElementById("page-bill").hidden = S.page !== "bill";
+  if (S.page === "bill"){ renderBill(); return; }
+  elStart.value = S.start;
+  document.querySelectorAll("#period button").forEach(b => b.classList.toggle("on", +b.dataset.h === S.h));
+  explorer(); coming(); track(); yearChart(); monthTable(); overview();
+}
+
+document.getElementById("meta").textContent =
+  `Latest forecast made ${nice(ISSUE)} using validated readings up to ${nice(LAST_MORNING)} · forecasts run to ${nice(LAST_DAY)} · pick any 2026 date below`;
+readHash();
+render();
+</script>
+</body>
+</html>
