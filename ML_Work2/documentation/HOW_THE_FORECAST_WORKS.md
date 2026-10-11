@@ -170,7 +170,7 @@ the pipeline; it does not recalculate or adjust any forecast.
 ### Bill forecast page (SAR)
 
 The second tab turns the forecast kWh into each meter's electricity bill
-(`forecasting/billing.py`; tariff values sit at the top of that file):
+(`utilities/billing_rules.py`; the tariff values are in `constants/tariff.py`):
 
 * bills run in **30-day cycles from 1 January 2026** (1–30 Jan, 31 Jan–1 Mar,
   2–31 Mar, …): 12 full cycles in 2026; cycle 13 (27 Dec – 25 Jan 2027) ends
@@ -186,7 +186,7 @@ The second tab turns the forecast kWh into each meter's electricity bill
   actual kWh so far + the latest forecast; later cycles use the latest forecast;
 * zone and facility bills are the sum of their meters' bills.
 
-Every meter-cycle bill is in `outputs/forecasts/bill_forecast_2026_by_meter.csv`.
+Every meter-cycle bill is in `outputs/forecasts/bill_forecast_by_meter.csv`.
 
 ## 8. Re-running
 

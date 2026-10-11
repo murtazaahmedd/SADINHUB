@@ -1,0 +1,201 @@
+{
+  "periods": [
+    {
+      "period": "development",
+      "from": "2025-04-15",
+      "to": "2026-03-31",
+      "days": 351,
+      "weeks": 50.1,
+      "days_checked": 8809,
+      "rule_alerts": 384,
+      "ml_alerts": 328,
+      "either_alerts": 530,
+      "rule_per_week": 7.7,
+      "ml_per_week": 6.5,
+      "either_per_week": 10.6,
+      "higher": 289,
+      "lower": 241,
+      "data_problem_episodes": 39
+    },
+    {
+      "period": "validation",
+      "from": "2026-04-01",
+      "to": "2026-08-31",
+      "days": 153,
+      "weeks": 21.9,
+      "days_checked": 4527,
+      "rule_alerts": 183,
+      "ml_alerts": 136,
+      "either_alerts": 236,
+      "rule_per_week": 8.4,
+      "ml_per_week": 6.2,
+      "either_per_week": 10.8,
+      "higher": 148,
+      "lower": 88,
+      "data_problem_episodes": 28
+    },
+    {
+      "period": "final test",
+      "from": "2026-09-01",
+      "to": "2026-09-30",
+      "days": 30,
+      "weeks": 4.3,
+      "days_checked": 901,
+      "rule_alerts": 57,
+      "ml_alerts": 27,
+      "either_alerts": 62,
+      "rule_per_week": 13.3,
+      "ml_per_week": 6.3,
+      "either_per_week": 14.5,
+      "higher": 33,
+      "lower": 29,
+      "data_problem_episodes": 12
+    },
+    {
+      "period": "latest",
+      "from": "2026-10-01",
+      "to": "2026-10-02",
+      "days": 2,
+      "weeks": 0.3,
+      "days_checked": 60,
+      "rule_alerts": 4,
+      "ml_alerts": 2,
+      "either_alerts": 4,
+      "rule_per_week": null,
+      "ml_per_week": null,
+      "either_per_week": null,
+      "higher": 2,
+      "lower": 2,
+      "data_problem_episodes": 1
+    }
+  ],
+  "final_test_agreement": {
+    "both": 22,
+    "rule_only": 35,
+    "ml_only": 5
+  },
+  "known_events": [
+    {
+      "event": "ZN.16 switched on after months at 0 kWh",
+      "meter": "ZN.16-PB_child__1_ch3pm",
+      "month": "2026-06",
+      "direction": "higher",
+      "period": "validation",
+      "first_alert": "2026-06-27",
+      "first_alert_by": "both",
+      "alerts": 4,
+      "rule": 4,
+      "ml": 4
+    },
+    {
+      "event": "ZN.8-PB.2 took on a large new load",
+      "meter": "ZN.8-PB.2_child__1_ch3pm",
+      "month": "2026-07",
+      "direction": "higher",
+      "period": "validation",
+      "first_alert": "2026-06-27",
+      "first_alert_by": "both",
+      "alerts": 5,
+      "rule": 1,
+      "ml": 5
+    },
+    {
+      "event": "ZN.13-PB.1 fell to a much lower level",
+      "meter": "ZN.13-PB.1_child__1_ch3pm",
+      "month": "2026-09",
+      "direction": "lower",
+      "period": "final test",
+      "first_alert": "2026-09-07",
+      "first_alert_by": "both",
+      "alerts": 1,
+      "rule": 1,
+      "ml": 1
+    },
+    {
+      "event": "February 2026 site-wide data outage",
+      "meter": "all meters",
+      "month": "2026-02",
+      "direction": null,
+      "period": "development",
+      "alerts": 1,
+      "rule": null,
+      "ml": null,
+      "first_alert": "2026-02-03",
+      "first_alert_by": null,
+      "note": "reported as one data problem, not as low consumption"
+    }
+  ],
+  "synthetic_check": {
+    "60% higher": {
+      "days_tested": 901,
+      "rule": 84.2,
+      "ml": 64.2,
+      "either": 84.4,
+      "wrong_direction_flags": 5
+    },
+    "60% lower": {
+      "days_tested": 901,
+      "rule": 87.6,
+      "ml": 86.6,
+      "either": 90.0,
+      "wrong_direction_flags": 2
+    }
+  },
+  "historical_register_check": {
+    "found": true,
+    "meter": "ZN.13-PB.1_child__1_ch3pm",
+    "date": "2025-02-05",
+    "trusted_day": false,
+    "reason": "register problem",
+    "flagged_as_data_problem": true
+  },
+  "settings": {
+    "rule_z": 3.0,
+    "min_diff_kwh": 10.0,
+    "min_diff_share": 0.2,
+    "ml_cutoff": -0.5670424484004533,
+    "ml_target_alert_rate": 0.03,
+    "validation_checked_days": 4527,
+    "validation_ml_target": 136,
+    "validation_rule_alerts": 183,
+    "forest": {
+      "n_estimators": 400,
+      "max_samples": 256,
+      "contamination": "auto",
+      "random_state": 7
+    },
+    "trained_rows": 8809
+  },
+  "mapping_rows_checked": 14915,
+  "extras": {
+    "per_period": {
+      "development": {
+        "daily_alerts": 530,
+        "incidents": 452,
+        "night_alerts": 174,
+        "nights_checked": 9243
+      },
+      "validation": {
+        "daily_alerts": 236,
+        "incidents": 200,
+        "night_alerts": 180,
+        "nights_checked": 4527
+      },
+      "final test": {
+        "daily_alerts": 62,
+        "incidents": 52,
+        "night_alerts": 21,
+        "nights_checked": 901
+      },
+      "latest": {
+        "daily_alerts": 4,
+        "incidents": 3,
+        "night_alerts": 3,
+        "nights_checked": 60
+      }
+    },
+    "incidents_total": 707,
+    "incidents_active": 10,
+    "night_total": 378
+  }
+}
